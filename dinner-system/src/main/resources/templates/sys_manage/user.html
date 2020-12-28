@@ -1,0 +1,586 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>用户管理</title>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="/css/bootstrap.min.css"/>
+    <link rel="shortcut icon" href="/images/icon.png">
+    <script type="text/javascript" src="/js/jquery.min.js"></script>
+    <script type="text/javascript" src="/js/bootstrap.min.js"></script>
+</head>
+<body>
+<!--表单查询-->
+<div class="panel panel-primary" style="border: 1px solid dodgerblue;">
+    <div class="panel-heading" style="background-color: dodgerblue;">条件查询</div>
+    <br>
+    <div class="form-horizontal">
+        <div class="form-group">
+            <label class="col-sm-1 control-label" align="right">用户名:</label>
+            <div class="col-sm-1">
+                <input type="text" class="form-control" id="selectUserName" placeholder="请输入用户名"/>
+            </div>
+            <label class="col-sm-1 control-label" align="right">姓名:</label>
+            <div class="col-sm-1">
+                <input type="text" class="form-control" id="selectName" placeholder="请输入姓名"/>
+            </div>
+            <label class="col-sm-1 control-label" align="right">电话:</label>
+            <div class="col-sm-1">
+                <input type="text" class="form-control" id="selectTel" placeholder="请输入电话"/>
+            </div>
+            <label class="col-sm-1 control-label" align="right">角色:</label>
+            <div class="col-sm-1">
+                <select type="text" id="selectRoleName" class="form-control">
+
+                </select>
+            </div>
+            <label class="col-sm-1 control-label" align="right">状态:</label>
+            <div class="col-sm-1">
+                <select type="text" id="selectStatus" class="form-control">
+                    <option value="" selected="selected">请选择状态</option>
+                    <option value="1">正常</option>
+                    <option value="0">已删除</option>
+                </select>
+            </div>
+            <div class="col-sm-2">
+                <button class="btn btn-success btn-sm" onclick="selectById()">查询</button>
+                <button type="button" class="btn btn-success btn-sm" onclick="addWin()">新增</button>
+                <button type="button" class="btn btn-success btn-sm" onclick="loadList()">刷新</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!--表格-->
+<div class="panel panel-primary" style="border: 1px solid dodgerblue;">
+    <div class="panel-heading" style="background-color: dodgerblue;">用户列表</div>
+    <table class="table table-bordered table-hover" style="text-align: center">
+        <thead>
+        <th width="3%" style="text-align: center">ID</th>
+        <th width="5%" style="text-align: center">用户名</th>
+        <th width="5%" style="text-align: center">密码</th>
+        <th width="5%" style="text-align: center">姓名</th>
+        <th width="5%" style="text-align: center">电话</th>
+        <th width="5%" style="text-align: center">角色</th>
+        <th width="20%" style="text-align: center">创建时间</th>
+        <th width="5%" style="text-align: center">状态</th>
+        <th width="15%" style="text-align: center">操作</th>
+        </thead>
+        <tbody id="tb">
+
+        </tbody>
+    </table>
+
+</div>
+<div style="position: absolute;left: 40%;">
+    每页
+    <select style="height: 30px;width: 60px; border: 1px solid green;" id="myrow" onchange="loadList()">
+        <option value="2">2</option>
+        <option value="5" selected="selected">5</option>
+        <option value="10">10</option>
+    </select>
+    条
+
+    <button class="btn btn-success btn-sm" onclick="per()">上一页</button>
+    <button class="btn btn-success btn-sm" onclick="next()">下一页</button>
+    <button class="btn btn-success btn-sm" onclick="indexPage()">首页</button>
+    <button class="btn btn-success btn-sm" onclick="endPages()">尾页</button>
+    共<span id="total">xx</span>页
+    一共<span id="pages">xx</span>条
+    当前<span id="curPage">xx</span>页
+</div>
+<!--模态框-->
+<div class="modal fade" id="myWin" style="top:200px">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header" style="background-color: dodgerblue;height: 40px;padding-top: 1px;">
+                <h4 align="center" id="title">新增用户</h4>
+            </div>
+            <div class="modal-body">
+                <form class="form-horizontal">
+                    <div class="form-group">
+                        <label class="col-sm-2 control-label" align="right">用户id:</label>
+                        <div class="col-sm-10">
+                            <input type="text" id="userId" readonly="readonly" class="form-control" placeholder="用户ID"/>
+                        </div>
+                        <label class="col-sm-2 control-label" align="right">用户名:</label>
+                        <div class="col-sm-10">
+                            <input type="text" id="userName" class="form-control" placeholder="请输入用户名"/>
+                        </div>
+                        <label class="col-sm-2 control-label" align="right">密码:</label>
+                        <div class="col-sm-10">
+                            <input type="text" id="pwd" class="form-control" placeholder="请输入密码"/>
+                        </div>
+                        <label class="col-sm-2 control-label" align="right">姓名</label>
+                        <div class="col-sm-10">
+                            <input type="text" id="name" class="form-control" placeholder="请输入姓名"/>
+                        </div>
+                        <label class="col-sm-2 control-label" align="right">电话:</label>
+                        <div class="col-sm-10">
+                            <input type="text" id="telNum" class="form-control" placeholder="请输入电话"/>
+                        </div>
+                        <!--<label class="col-sm-2 control-label" align="right">状态:</label>
+                        <div class="col-sm-10">
+                            <select type="text" id="status" class="form-control">
+                                <option value="1" selected="selected">正常</option>
+                                <option value="0"></option>
+                            </select>
+                        </div>-->
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-success" type="button" id="updateBtn" onclick="update()">修改</button>
+                <button class="btn btn-success" type="button" id="addBtn" onclick="insert()">新增</button>
+                <button class="btn btn-success" type="button" data-dismiss="modal">取消</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!--分配模态框-->
+<div class="modal fade" id="fpWin" style="top:200px">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header" style="background-color: dodgerblue;height: 40px;padding-top: 1px;">
+                <h4 align="center">分配角色</h4>
+            </div>
+            <div class="modal-body">
+                <form class="form-horizontal">
+                    <div class="form-group">
+                        <label class="col-sm-2 control-label" align="right">用户id:</label>
+                        <div class="col-sm-10">
+                            <input type="text" id="fpId" readonly="readonly" class="form-control" placeholder="用户ID"/>
+                        </div>
+                        <label class="col-sm-2 control-label" align="right">角色:</label>
+                        <div class="col-sm-10">
+                            <select type="text" id="roleName" class="form-control">
+
+                            </select>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-success" type="button" onclick="fpRole()">分配</button>
+                <button class="btn btn-success" type="button" data-dismiss="modal">取消</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+</body>
+</html>
+<script>
+    //文档加载事件
+    $(function () {
+        roleList();
+        loadList();
+    })
+    //页码
+    var page = 1;
+    //尾页码
+    var endPage;
+
+    //上一页
+    function per() {
+        page--;
+        if (page < 1) {
+            page = 1
+        }
+        loadList();
+    }
+
+    //下一页
+    function next() {
+        page++;
+        if (page > endPage) {
+            page = endPage;
+        }
+        loadList();
+    }
+
+    //首页
+    function indexPage() {
+        page = 1
+        loadList();
+    }
+
+    //尾页
+    function endPages() {
+        page = endPage;
+        loadList();
+    }
+
+    //加载角色列表
+    function roleList() {
+        $.ajax({
+            url: "/role/findAll",
+            type: "get",
+            dataType: "json",
+            success: function (data) {
+                window.list1 = data.data
+                console.log(list1);
+                //拼接html的变量
+                var s = "请选择角色";
+                // var a = "selected";
+                var str = '<option value="" selected="selected">' + s + '</option>';
+                for (var i = 0; i < list1.length; i++) {　//将数据循环插入select框中
+                    str += "<option value=" + list1[i].id + ">" + list1[i].roleName + "</option>";
+                }
+                $("#selectRoleName").html(str);//select框的id，这句是将拼接的选项写入到select
+                $("#roleName").html(str);
+            }
+        })
+    }
+
+    //加载列表
+    function loadList() {
+        //获取用户选择的每页显示条数
+        var row = $("#myrow").val();
+        $.ajax({
+            url: "/user/queryAllUser",
+            data: {"page": page, "rows": row},
+            type: "get",
+            dataType: "json",
+            success: function (data) {
+                //获取查询的结果集
+                var list = data.data;
+                //尾页
+                endPage = data.endPage;
+                //显示总条数
+                $("#pages").text(data.total);
+                //显示总页数
+                $("#total").text(data.pages);
+                //显示当前页
+                $("#curPage").text(data.curPage);
+
+                //拼接html的变量
+                var html = "";
+                for (var i = 0; i < list.length; i++) {
+                    function timetrans(dataTime) {// 格式化日期
+                        var date = new Date(dataTime);
+                        var YY = date.getFullYear() + '年';
+                        var MM = (date.getMonth() + 1 < 10 ? '0' + (date.getMonth() + 1) : date.getMonth() + 1) + '月';
+                        var DD = (date.getDate() < 10 ? '0' + (date.getDate()) : date.getDate())+'日 ';
+                        var hh = (date.getHours() < 10 ? '0' + date.getHours() : date.getHours()) + ':';
+                        var mm = (date.getMinutes() < 10 ? '0' + date.getMinutes() : date.getMinutes()) + ':';
+                        var ss = (date.getSeconds() < 10 ? '0' + date.getSeconds() : date.getSeconds());
+                        return YY + MM + DD + hh + mm + ss;
+                    }
+
+                    if (list[i].status === 1) {
+                        list[i].status = "正常";
+                    } else {
+                        list[i].status = "已删除";
+                    }
+                    for (var j = 0; j < list1.length; j++) {
+                        if (list[i].roleId === list1[j].id) {
+                            list[i].roleId = list1[j].roleName;
+                        }
+                    }
+                    html += "<tr>" +
+                        "<td>" + list[i].id + "</td>" +
+                        "<td>" + list[i].userName + "</td>" +
+                        "<td>" + list[i].pwd + "</td>" +
+                        "<td>" + list[i].name + "</td>" +
+                        "<td>" + list[i].telNum + "</td>" +
+                        "<td>" + list[i].roleId + "</td>" +
+                        "<td>" + timetrans(list[i].createTime) + "</td>" +
+                        "<td>" + list[i].status + "</td>" +
+                        "<td>" +
+                        "<button class='btn btn-warning btn-sm' onclick='upWindow(this)'>修改</button>" +
+                        "<button class='btn btn-info btn-sm' onclick='fpWindow(this)'>分配角色</button>" +
+                        "<button class='btn btn-danger btn-sm'  onclick='del(this)'>删除</button>" +
+                        "<button class='btn btn-success btn-sm'  onclick='backUser(this)'>恢复</button>" +
+                        "</td>" +
+                        "</tr>"
+                }
+                //html设置文本和标签
+                $("#tb").html(html);
+
+            }
+        })
+    }
+
+    //打开新增窗口
+    function addWin() {
+        //清空模态框的数据
+        clearWin();
+        //显示模态框
+        $("#myWin").modal("show");
+        //更改窗体的标题
+        $("#title").text("新增记录");
+        //隐藏修改按钮的button
+        $("#updateBtn").hide();
+        //显示新增按钮的button
+        $("#addBtn").show();
+        //id不可编辑
+        $("#foodId").attr("readOnly", true);
+
+    }
+
+    //新增数据
+    function insert() {
+        //获取员工姓名
+        var userId = $("#userId").val();
+        var userName = $("#userName").val();
+        var pwd = $("#pwd").val();
+        var name = $("#name").val();
+        var telNum = $("#telNum").val();
+        $.ajax({
+            url: "/user/add",
+            data: {
+                "id": userId,
+                "userName": userName,
+                "pwd": pwd,
+                "name": name,
+                "telNum": telNum,
+            },
+            type: "get",
+            dataType: "json",
+            success: function (data) {
+                if (data.info === "新增成功") {
+                    $("#myWin").modal("hide")
+                    //刷新
+                    loadList();
+                } else {
+                    alert(data.info);
+                }
+            }
+        })
+    }
+
+    //清空
+    function clearWin() {
+        $("#userId").val("");
+        $("#userName").val("");
+        $("#pwd").val("");
+        $("#name").val("");
+        $("#telNum").val("");
+
+    }
+
+    //打开修改窗口
+    function upWindow(obj) {
+        //显示模态框
+        $("#myWin").modal("show");
+        //更改窗体的标题
+        $("#title").text("修改记录");
+        //隐藏新增按钮的button
+        $("#addBtn").hide();
+        //显示修改按钮的button
+        $("#updateBtn").show();
+        //学生id不可编辑
+        $("#userId").attr("readOnly", true);
+
+        //获取选中行的的第一列的数据
+        var userId = $(obj).parent().parent().find("td").eq(0).text();
+        //设置模态框中 的值
+        $("#userId").val(userId);
+        //获取选中行的的第二列的数据
+        var userName = $(obj).parent().parent().find("td").eq(1).text();
+        //设置模态框中 的值
+        $("#userName").val(userName);
+        //获取选中行的的第三列的数据
+        var pwd = $(obj).parent().parent().find("td").eq(2).text();
+        //设置模态框中 的值
+        $("#pwd").val(pwd);
+        //获取选中行的的第四列的数据
+        var name = $(obj).parent().parent().find("td").eq(3).text();
+        //设置模态框中 的值id
+        $("#name").val(name);
+        //获取选中行的的第五列的数据
+        var telNum = $(obj).parent().parent().find("td").eq(4).text();
+        //设置模态框中 的值
+        $("#telNum").val(telNum);
+
+
+    }
+
+    function fpWindow(obj) {
+        //显示模态框
+        $("#fpWin").modal("show");
+        //获取选中行的的第一列的数据
+        var userId = $(obj).parent().parent().find("td").eq(0).text();
+        //设置模态框中 的值
+        $("#fpId").val(userId);
+    }
+
+    function fpRole() {
+        //获取id
+        var userId = $("#fpId").val();
+        var roleId = $("#roleName").val();
+        $.ajax({
+            url: "/user/fpRole",
+            data: {
+                "id": userId,
+                "roleId": roleId
+            },
+            type: "get",
+            dataType: "json",
+            success: function (data) {
+                if (data.info === "分配成功") {
+                    $("#fpWin").modal("hide")
+                    //刷新
+                    loadList();
+                } else {
+                    alert(data.info);
+                }
+            }
+        })
+    }
+
+    //修改数据
+    function update() {
+        //获取员工姓名
+        var userId = $("#userId").val();
+        var userName = $("#userName").val();
+        var pwd = $("#pwd").val();
+        var name = $("#name").val();
+        var telNum = $("#telNum").val();
+        $.ajax({
+            url: "/user/update",
+            data: {
+                "id": userId,
+                "userName": userName,
+                "pwd": pwd,
+                "name": name,
+                "telNum": telNum,
+            },
+            type: "get",
+            dataType: "json",
+            success: function (data) {
+                if (data.info === "修改成功") {
+                    $("#myWin").modal("hide")
+                    //刷新
+                    loadList();
+                } else {
+                    alert(data.info);
+                }
+            }
+        })
+    }
+
+    //修改数据
+    function backUser(obj) {
+        //获取选中行的的第一列的数据
+        var userId = $(obj).parent().parent().find("td").eq(0).text();
+        $.ajax({
+            url: "/user/backUser",
+            data: {"id": userId},
+            type: "get",
+            dataType: "json",
+            success: function (data) {
+                if (data.info === "恢复成功") {
+                    $("#myWin").modal("hide")
+                    //刷新
+                    loadList();
+                } else {
+                    alert(data.info);
+                }
+            }
+        })
+    }
+
+    //删除
+    function del(obj) {
+        var info = confirm("你确定要删除吗")
+        if (info) {
+            var Id = $(obj).parent().parent().find("td").eq(0).text();
+            $.ajax({
+                url: "/user/del",
+                data: {"id": Id},
+                type: "get",
+                dataType: "json",
+                success: function (data) {
+                    if (data.info === "删除成功") {
+                        $("#myWin").modal("hide")
+                        //刷新
+                        loadList();
+                    } else {
+                        alert(data.info);
+                    }
+
+                }
+            })
+        }
+    }
+
+    //条件查询
+    function selectById() {
+        //获取用户选择的每页显示条数
+        var row = $("#myrow").val();
+        //获取id
+        var userName = $("#selectUserName").val();
+        var name = $("#selectName").val();
+        var tel = $("#selectTel").val();
+        var roleId = $("#selectRoleName").val();
+        var status = $("#selectStatus").val();
+
+        $.ajax({
+            url: "/user/select",
+            //"page"键名和page属性对应
+            data: {
+                "userName": userName,
+                "name": name,
+                "telNum": tel,
+                "roleId": roleId,
+                "status": status,
+                "page": page,
+                "rows": row
+            },
+            type: "get",
+            dataType: "json",
+            success: function (data) {
+                if (data.info === "查询成功") {
+                    //获取查询的结果集
+                    var list = data.data;
+                    //尾页
+                    endPage = data.endPage;
+                    //显示总条数
+                    $("#pages").text(data.total);
+                    //显示总页数
+                    $("#total").text(data.pages);
+                    //显示当前页
+                    $("#curPage").text(data.curPage);
+
+                    //拼接html的变量
+                    var html = "";
+                    for (var i = 0; i < list.length; i++) {
+                        if (list[i].status === 1) {
+                            list[i].status = "正常";
+                        } else {
+                            list[i].status = "已删除";
+                        }
+                        for (var j = 0; j < list1.length; j++) {
+                            if (list[i].roleId === list1[j].id) {
+                                list[i].roleId = list1[j].roleName;
+                            }
+                        }
+                        html += "<tr>" +
+                            "<td>" + list[i].id + "</td>" +
+                            "<td>" + list[i].userName + "</td>" +
+                            "<td>" + list[i].pwd + "</td>" +
+                            "<td>" + list[i].name + "</td>" +
+                            "<td>" + list[i].telNum + "</td>" +
+                            "<td>" + list[i].roleId + "</td>" +
+                            "<td>" + list[i].createTime + "</td>" +
+                            "<td>" + list[i].status + "</td>" +
+                            "<td>" +
+                            "<button class='btn btn-warning btn-sm' onclick='upWindow(this)'>修改</button>" +
+                            "<button class='btn btn-info btn-sm' onclick='fpWindow(this)'>分配角色</button>" +
+                            "<button class='btn btn-danger btn-sm'  onclick='del(this)'>删除</button>" +
+                            "<button class='btn btn-success btn-sm'  onclick='backUser(this)'>恢复</button>" +
+                            "</td>" +
+                            "</tr>"
+                    }
+                    //html设置文本和标签
+                    $("#tb").html(html);
+                } else {
+                    alert(data.info);
+                }
+            }
+        })
+
+    }
+</script>

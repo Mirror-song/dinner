@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org " >
+<head>
+    <meta charset="UTF-8">
+    <title>订单列表</title>
+    <link rel="stylesheet" href="/css/bootstrap.min.css"/>
+    <link rel="shortcut icon" href="/images/icon.png">
+    <script type="text/javascript" src="/js/jquery.min.js"></script>
+    <script type="text/javascript" src="/js/bootstrap.min.js"></script>
+</head>
+<body>
+<div class="panel panel-primary" style="border: 1px solid dodgerblue;">
+    <div class="panel-heading" style="background-color: dodgerblue;">
+        订单列表
+        <button type="button" class="btn btn-success btn-sm" style="float: right;margin-right: 100px"
+                onclick="loadList()">刷新
+        </button>
+    </div>
+    <table class="table table-bordered table-hover" style="text-align: center">
+        <thead>
+        <th width="5%" style="text-align: center">ID</th>
+        <th width="10%" style="text-align: center">餐桌号</th>
+        <th width="10%" style="text-align: center">菜名</th>
+        <th width="10%" style="text-align: center">数量</th>
+        <th width="10%" style="text-align: center">价格</th>
+        <th width="10%" style="text-align: center">时间</th>
+        <th width="10%" style="text-align: center">操作</th>
+        </thead>
+        <tbody id="tb">
+
+        </tbody>
+    </table>
+</div>
+
+<div style="position: absolute;left: 40%;">
+    每页
+    <select style="height: 30px;width: 60px; border: 1px solid green;" id="myrow" onchange="loadList()">
+        <option value="2">2</option>
+        <option value="5" selected="selected">5</option>
+        <option value="10">10</option>
+    </select>
+    条
+
+    <button class="btn btn-success btn-sm" onclick="per()">上一页</button>
+    <button class="btn btn-success btn-sm" onclick="next()">下一页</button>
+    <button class="btn btn-success btn-sm" onclick="indexPage()">首页</button>
+    <button class="btn btn-success btn-sm" onclick="endPages()">尾页</button>
+    共<span id="total">xx</span>页
+    一共<span id="pages">xx</span>条
+    当前<span id="curPage">xx</span>页
+</div>
+</body>
+</html>
+<script>
+    //文档加载事件
+    $(function () {
+        table();
+        food();
+        loadList();
+    })
+    //页码
+    var page = 1;
+    //尾页码
+    var endPage;
+
+    //上一页
+    function per() {
+        page--;
+        if (page < 1) {
+            page = 1
+        }
+        loadList();
+    }
+
+    //下一页
+    function next() {
+        page++;
+        if (page > endPage) {
+            page = endPage;
+        }
+        loadList();
+    }
+
+    //首页
+    function indexPage() {
+        page = 1
+        loadList();
+    }
+
+    //尾页
+    function endPages() {
+        page = endPage;
+        loadList();
+    }
+
+    //加载菜品列表
+    function food() {
+        var row = $("#myrow").val();
+        $.ajax({
+            url: "/food/queryAllFood",
+            data: {"page": 1, "rows": 50},
+            type: "get",
+            dataType: "json",
+            success: function (data) {
+                window.list1 = data.data;
+                console.log(list1)
+            }
+        })
+    }
+
+    //加载餐桌列表
+    function table() {
+        var row = $("#myrow").val();
+        $.ajax({
+            url: "/table/queryAllTable",
+            type: "get",
+            data: {"page": 1, "rows": 10},
+            dataType: "json",
+            success: function (data) {
+                window.list2 = data.data;
+                console.log(list2)
+            }
+        })
+    }
+
+    function loadList() {
+        //获取用户选择的每页显示条数
+        var row = $("#myrow").val();
+        $.ajax({
+            url: "/orderDetail/findAllOrder",
+            type: "get",
+            dataType: "json",
+            data: {"page": page, "rows": row},
+            success: function (data) {
+                //获取查询的结果集
+                var list = data.data;
+                //尾页
+                endPage = data.endPage;
+                //显示总条数
+                $("#pages").text(data.total);
+                //显示总页数
+                $("#total").text(data.pages);
+                //显示当前页
+                $("#curPage").text(data.curPage);
+                //拼接html的变量
+                var html = "";
+                for (var i = 0; i < list.length; i++) {
+                    for (var j = 0; j < list1.length; j++) {
+                        if (list[i].foodId === list1[j].id) {
+                            list[i].foodId = list1[j].foodName;
+                        }
+                    }
+                    for (var t = 0; t < list2.length; t++) {
+                        if (list[i].tableId === list2[t].id) {
+                            list[i].tableId = list2[t].tableName;
+                        }
+                    }
+                    html += "<tr>" +
+                        "<td>" + list[i].id + "</td>" +
+                        "<td>" + list[i].tableId + "</td>" +
+                        "<td>" + list[i].foodId + "</td>" +
+                        "<td>" + list[i].foodCount + "份" + "</td>" +
+                        "<td>" + list[i].price + "元" + "</td>" +
+                        "<td>" + list[i].orderNo + "</td>" +
+                        "<td><button class='btn btn-danger btn-sm' onclick='del(this)'>删除订单</button></td>" +
+                        "</tr>"
+                    //html设置文本和标签
+                    $("#tb").html(html);
+                }
+            }
+        })
+    }
+
+    //出菜
+    function del(obj) {
+        var info = confirm("你确定要删除吗？")
+        if (info) {
+            var orderId = $(obj).parent().parent().find("td").eq(0).text();
+            $.ajax({
+                url: "/orderDetail/del",
+                data: {"id": orderId},
+                type: "get",
+                dataType: "json",
+                success: function (data) {
+                    if (data.info === "删除成功") {
+                        //刷新
+                        loadList();
+                    } else {
+                        alert(data.info);
+                    }
+                }
+            })
+        }
+    }
+
+
+</script>

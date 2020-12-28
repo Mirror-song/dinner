@@ -1,0 +1,396 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>角色管理</title>
+    <meta charset="UTF-8">
+    <title></title>
+    <link rel="stylesheet" href="/css/bootstrap.min.css"/>
+    <link rel="shortcut icon" href="/images/icon.png">
+    <script type="text/javascript" src="/js/jquery.min.js"></script>
+    <script type="text/javascript" src="/js/bootstrap.min.js"></script>
+</head>
+<body>
+<!--表单查询-->
+<div class="panel panel-primary" style="border: 1px solid dodgerblue;">
+    <div class="panel-heading" style="background-color: dodgerblue;">条件查询</div>
+    <br>
+    <div class="form-horizontal">
+        <div class="form-group">
+
+            <label class="col-sm-1 control-label" align="right">角色ID:</label>
+            <div class="col-sm-2">
+                <input type="text" class="form-control" id="selectId" placeholder="按ID查询"/>
+            </div>
+
+            <label class="col-sm-1 control-label" align="right">角色名:</label>
+            <div class="col-sm-2">
+                <input type="text" class="form-control" id="selectRoleName" placeholder="按角色名查询"/>
+            </div>
+            <label class="col-sm-1 control-label" align="right">状态:</label>
+            <div class="col-sm-2">
+                <select type="text" id="selectStatus" class="form-control">
+                    <option value="" selected="selected">请选择状态</option>
+                    <option value="1">正常</option>
+                    <option value="0">已删除</option>
+                </select>
+            </div>
+            <div class="col-sm-2">
+                <button class="btn btn-success btn-sm" onclick="selectById()">查询</button>
+                <button type="button" class="btn btn-success btn-sm" onclick="addWin()">新增</button>
+                <button type="button" class="btn btn-success btn-sm" onclick="loadList()">刷新</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!--表格-->
+<div class="panel panel-primary" style="border: 1px solid dodgerblue;">
+    <div class="panel-heading" style="background-color: dodgerblue;">菜品列表</div>
+    <table class="table table-bordered table-hover">
+        <thead>
+        <th width="5%">ID</th>
+        <th>角色名</th>
+        <th>状态</th>
+        <th width="20%">操作</th>
+        </thead>
+        <tbody id="tb">
+
+        </tbody>
+    </table>
+
+</div>
+<div style="position: absolute;left: 40%;">
+    每页
+    <select style="height: 30px;width: 60px; border: 1px solid green;" id="myrow" onchange="loadList()">
+        <option value="2">2</option>
+        <option value="5" selected="selected">5</option>
+        <option value="10">10</option>
+    </select>
+    条
+
+    <button class="btn btn-success btn-sm" onclick="per()">上一页</button>
+    <button class="btn btn-success btn-sm" onclick="next()">下一页</button>
+    <button class="btn btn-success btn-sm" onclick="indexPage()">首页</button>
+    <button class="btn btn-success btn-sm" onclick="endPages()">尾页</button>
+    共<span id="total">xx</span>页
+    一共<span id="pages">xx</span>条
+    当前<span id="curPage">xx</span>页
+</div>
+<!--模态框-->
+<div class="modal fade" id="myWin" style="top:200px">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header" style="background-color: dodgerblue;height: 40px;padding-top: 1px;">
+                <h4 align="center" id="title">新增菜品</h4>
+            </div>
+            <div class="modal-body">
+                <form class="form-horizontal">
+                    <div class="form-group">
+                        <label class="col-sm-2 control-label" align="right">角色ID:</label>
+                        <div class="col-sm-10">
+                            <input type="text" id="roleId" readonly="readonly" class="form-control" placeholder="角色ID"/>
+                        </div>
+                        <label class="col-sm-2 control-label" align="right">角色名:</label>
+                        <div class="col-sm-10">
+                            <input type="text" id="roleName" class="form-control" placeholder="请输入角色名"/>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-success" type="button" id="updateBtn" onclick="update()">修改</button>
+                <button class="btn btn-success" type="button" id="addBtn" onclick="insert()">新增</button>
+                <button class="btn btn-success" type="button" data-dismiss="modal">取消</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
+<script>
+    //文档加载事件
+    $(function () {
+        loadList();
+    })
+    //页码
+    var page = 1;
+    //尾页码
+    var endPage;
+
+    //上一页
+    function per() {
+        page--;
+        if (page < 1) {
+            page = 1
+        }
+        loadList();
+    }
+
+    //下一页
+    function next() {
+        page++;
+        if (page > endPage) {
+            page = endPage;
+        }
+        loadList();
+    }
+
+    //首页
+    function indexPage() {
+        page = 1
+        loadList();
+    }
+
+    //尾页
+    function endPages() {
+        page = endPage;
+        loadList();
+    }
+
+    //加载列表
+    function loadList() {
+        //获取用户选择的每页显示条数
+        var row = $("#myrow").val();
+        $.ajax({
+            url: "/role/queryAllRole",
+            //"page"键名和page属性对应
+            data: {"page": page, "rows": row},
+            type: "get",
+            dataType: "json",
+            success: function (data) {
+                //获取查询的结果集
+                var list = data.data;
+                //尾页
+                endPage = data.endPage;
+                //显示总条数
+                $("#pages").text(data.total);
+                //显示总页数
+                $("#total").text(data.pages);
+                //显示当前页
+                $("#curPage").text(data.curPage);
+
+                //拼接html的变量
+                var html = "";
+                for (var i = 0; i < list.length; i++) {
+                    if (list[i].status === 1) {
+                        list[i].status = "正常";
+                    } else {
+                        list[i].status = "已删除";
+                    }
+                    html += "<tr>" +
+                        "<td>" + list[i].id + "</td>" +
+                        "<td>" + list[i].roleName + "</td>" +
+                        "<td>" + list[i].status + "</td>" +
+                        "<td>" +
+                        "<button class='btn btn-warning btn-sm' onclick='upWindow(this)'>修改</button>" +
+                        "<button class='btn btn-danger btn-sm' onclick='del(this)'>删除</button>" +
+                        "<button class='btn btn-success btn-sm'  onclick='backRole(this)'>恢复</button>" +
+                        "</td>" +
+                        "</tr>"
+                }
+                //html设置文本和标签
+                $("#tb").html(html);
+
+            }
+        })
+    }
+
+    //打开新增窗口
+    function addWin() {
+        //清空模态框的数据
+        clearWin();
+        //显示模态框
+        $("#myWin").modal("show");
+        //更改窗体的标题
+        $("#title").text("新增记录");
+        //隐藏修改按钮的button
+        $("#updateBtn").hide();
+        //显示新增按钮的button
+        $("#addBtn").show();
+        //学生id可编辑
+        $("#studentIdCheck").attr("readOnly", false);
+
+    }
+
+    //新增数据
+    function insert() {
+        //获取员工姓名
+        var roleName = $("#roleName").val();
+        $.ajax({
+            url: "/role/add",
+            data: {
+                "roleName": roleName
+            },
+            type: "get",
+            dataType: "json",
+            success: function (data) {
+                if (data.info === "新增成功") {
+                    $("#myWin").modal("hide")
+                    //刷新
+                    loadList();
+                } else {
+                    alert(data.info);
+                }
+            }
+        })
+    }
+
+    //清空
+    function clearWin() {
+        $("#studentIdCheck").val("");
+        $("#checkId").val("");
+        $("#checkMorning").val("");
+        $("#checkEvening").val("");
+        $("#checkReason").val("");
+        $("#checkTime").val("");
+    }
+
+    //打开修改窗口
+    function upWindow(obj) {
+        //显示模态框
+        $("#myWin").modal("show");
+        //更改窗体的标题
+        $("#title").text("修改记录");
+        //隐藏新增按钮的button
+        $("#addBtn").hide();
+        //显示修改按钮的button
+        $("#updateBtn").show();
+        //学生id不可编辑
+        $("#studentIdCheck").attr("readOnly", true);
+
+        //获取选中行的的第一列的数据
+        var roleId = $(obj).parent().parent().find("td").eq(0).text();
+        //设置模态框中 的值
+        $("#roleId").val(roleId);
+        //获取选中行的的第二列的数据
+        var roleName = $(obj).parent().parent().find("td").eq(1).text();
+        //设置模态框中 的值
+        $("#roleName").val(roleName);
+    }
+
+    //修改数据
+    function update() {
+        //获取员工姓名
+        var roleId = $("#roleId").val();
+        var roleName = $("#roleName").val();
+        $.ajax({
+            url: "/role/update",
+            data: {
+                "id": roleId,
+                "roleName": roleName
+            },
+            type: "get",
+            dataType: "json",
+            success: function (data) {
+                if (data.info === "修改成功") {
+                    $("#myWin").modal("hide")
+                    //刷新
+                    loadList();
+                } else {
+                    alert(data.info);
+                }
+            }
+        })
+    }
+
+    //删除
+    function del(obj) {
+        var info = confirm("你确定要删除吗？")
+        if (info) {
+            //获取要删除的id
+            var id = $(obj).parent().parent().find("td").eq(0).text();
+            $.ajax({
+                url: "/role/del",
+                data: {"id": id},
+                type: "get",
+                dataType: "json",
+                success: function (data) {
+                    if (data.info === "删除成功") {
+                        $("#myWin").modal("hide")
+                        //刷新
+                        loadList();
+                    } else {
+                        alert(data.info);
+                    }
+
+                }
+            })
+        }
+    }
+
+    //恢复
+    function backRole(obj) {
+        //获取选中行的的第一列的数据
+        var roleId = $(obj).parent().parent().find("td").eq(0).text();
+        $.ajax({
+            url: "/role/backRole",
+            data: {"id": roleId},
+            type: "get",
+            dataType: "json",
+            success: function (data) {
+                if (data.info === "恢复成功") {
+                    $("#myWin").modal("hide")
+                    //刷新
+                    loadList();
+                } else {
+                    alert(data.info);
+                }
+            }
+        })
+    }
+
+    //条件查询
+    function selectById() {
+        //获取用户选择的每页显示条数
+        var row = $("#myrow").val();
+        var id = $("#selectId").val();
+        var roleName = $("#selectRoleName").val();
+        var status = $("#selectStatus").val();
+        $.ajax({
+            url: "/role/select",
+            //"page"键名和page属性对应
+            data: {"id": id, "roleName": roleName, "status": status, "page": page, "rows": row},
+            type: "get",
+            dataType: "json",
+            success: function (data) {
+                if (data.info === "查询成功") {
+                    //获取查询的结果集
+                    var list = data.data;
+                    //尾页
+                    endPage = data.endPage;
+                    //显示总条数
+                    $("#pages").text(data.total);
+                    //显示总页数
+                    $("#total").text(data.pages);
+                    //显示当前页
+                    $("#curPage").text(data.curPage);
+
+                    //拼接html的变量
+                    var html = "";
+                    for (var i = 0; i < list.length; i++) {
+                        if (list[i].status === 1) {
+                            list[i].status = "正常";
+                        } else {
+                            list[i].status = "已删除";
+                        }
+                        html += "<tr>" +
+                            "<td>" + list[i].id + "</td>" +
+                            "<td>" + list[i].roleName + "</td>" +
+                            "<td>" + list[i].status + "</td>" +
+                            "<td>" +
+                            "<button class='btn btn-warning btn-sm' onclick='upWindow(this)'>修改</button>" +
+                            "<button class='btn btn-danger btn-sm' onclick='del(this)'>删除</button>" +
+                            "<button class='btn btn-success btn-sm'  onclick='backRole(this)'>恢复</button>" +
+                            "</td>" +
+                            "</tr>"
+                    }
+                    //html设置文本和标签
+                    $("#tb").html(html);
+                } else {
+                    alert(data.info);
+                }
+            }
+        })
+    }
+</script>

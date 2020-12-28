@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="renderer" content="webkit">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+    <title>菜单页</title>
+    <link rel="stylesheet" th:href="@{/layui/css/layui.css}" media="all">
+    <link rel="shortcut icon" href="/images/icon.png">
+    <link rel="stylesheet" href="/css/bootstrap.min.css"/>
+    <script type="text/javascript" src="/js/jquery.min.js"></script>
+    <script type="text/javascript" src="/js/bootstrap.min.js"></script>
+</head>
+
+<!--layui.table图片显示不全，需重新定义CSS  -->
+<style type="text/css">
+    .layui-table-cell {
+        height: auto !important;
+        white-space: normal;
+    }
+</style>
+
+<body>
+<div class="layui-container" style="width: 1550px;height: auto;padding-top: 50px;">
+
+    <label class="col-sm-2 control-label" align="right">餐桌:</label>
+    <div class="col-sm-2">
+        <select type="text" id="table" class="form-control">
+
+        </select>
+    </div>
+    <div>
+        <a href="/logout">
+            <button class="layui-btn layui-btn-warm layui-btn-radius">订单详情</button>
+        </a>
+    </div>
+
+    <table class="layui-hide" id="test" lay-filter="test">
+
+    </table>
+
+    <script type="text/html" id="barDemo">
+        <a class="layui-btn layui-btn-xs" lay-event="order">下单</a>
+    </script>
+    <!--表格中加图片-->
+    <script type="text/html" id="imgTmp">
+        <div>
+            <img src="{{ d.imgUrl }}" alt="" height="100" width="100" onclick="previewImg(this)"></a>
+        </div>
+    </script>
+    <!--表格中加入计数-->
+    <script type="text/html" id="countTmp">
+        <div>
+            <button class="btn" onclick="fun(this)">-</button>
+            <span>1</span>
+            <button class="btn" onclick="fun(this)">+</button>
+            <!--            <input type="text" value="0" width="20">-->
+        </div>
+    </script>
+
+    <script th:src=" @{/layui/layui.js}" charset="utf-8"></script>
+    <script>
+        layui.use('table', function () {
+            var table = layui.table;
+
+            table.render({
+                elem: '#test'
+                // ,height: 'full-200'
+                , url: '/food/queryMenuFood'
+                , title: '菜单列表'
+                , cols: [
+                    [
+                        {field: 'id', width: 100, title: '编号', sort: true, style: "height:110px;"}
+                        , {field: 'imgUrl', width: 200, title: '图片', templet: "#imgTmp", align: "center"}
+                        , {field: 'foodName', width: 150, title: '菜名'}
+                        , {field: 'typeName', width: 100, title: '菜系'}
+                        , {field: 'price', width: 100, title: '价格',}
+                        , {field: 'vipPrice', width: 100, title: '会员价'}
+                        , {field: 'description', width: 510, title: '描述'}
+                        , {field: 'count', width: 150, title: '数量', templet: "#countTmp"}
+                        , {fixed: 'right', title: '操作', toolbar: '#barDemo', width: 100}
+                    ]
+                ]
+                , page: true
+            });
+
+            //监听行工具事件
+            table.on('tool(test)', function (obj) {
+                var data = obj.data;
+                var foodId = data.id;
+                if (obj.event === 'order') {
+                    $.ajax({
+                        url: "/order/save",
+                        type: "get",
+                        data: {"foodId": foodId,},
+                        dataType: "json",
+                        success: function (data) {
+                            window.list1 = data.data
+                            console.log(list1);
+                            //拼接html的变量
+                            var s = "请选择菜系";
+                            var a = "selected"
+                            var str = "<option>" + s + "</option>";
+                            for (var i = 0; i < list1.length; i++) {　//将数据循环插入select框中
+                                str += "<option value=" + list1[i].id + ">" + list1[i].tableName + "</option>";
+                            }
+                            $("#table").html(str);//select框的id，这句是将拼接的选项写入到select
+                            $("#tableId").html(str);
+                        }
+                    })
+                }
+            });
+        });
+    </script>
+
+</div>
+
+<script>
+    //文档加载事件
+    $(function () {
+        tableList();
+    })
+    //二级菜单联动
+    layui.use('element', function () {
+        var element = layui.element;
+    });
+
+    //加载餐桌列表
+    function tableList() {
+        $.ajax({
+            url: "/table/queryTable",
+            type: "get",
+            dataType: "json",
+            success: function (data) {
+                window.list1 = data.data
+                console.log(list1);
+                //拼接html的变量
+                var s = "请选择餐桌";
+                var a = "selected"
+                var str = "<option>" + s + "</option>";
+                for (var i = 0; i < list1.length; i++) {　//将数据循环插入select框中
+                    str += "<option value=" + list1[i].id + ">" + list1[i].tableName + "</option>";
+                }
+                $("#table").html(str);//select框的id，这句是将拼接的选项写入到select
+            }
+        })
+    }
+
+    function fun(btn) {
+        // var span = document.getElementById("spanCount");
+        var span = $(btn).parent().children("span")
+        console.log(span.html())
+        var n = parseInt(span.html());
+        if (btn.innerHTML === "+") {
+            n++;
+            if (n > 10) {
+                n = 10;
+                alert("限购10件")
+            }
+        } else if (n !== 1) {
+            n--;
+        }
+        span.html(n);
+    }
+
+    function previewImg(obj) {
+        var img = new Image();
+        img.src = obj.src;
+        // alert(img.src);
+        var imgHtml = "<img src='" + obj.src + "' />";
+        //捕获页
+        layer.open({
+            type: 1,
+            shade: false,
+            title: false, //不显示标题
+            //area:['600px','500px'],
+            area: [600 + 'px', 480 + 'px'],
+            content: imgHtml, //捕获的元素，注意：最好该指定的元素要存放在body最外层，否则可能被其它的相对元素所影响
+            cancel: function () {
+                //layer.msg('捕获就是从页面已经存在的元素上，包裹layer的结构', { time: 5000, icon: 6 });
+            }
+        });
+    }
+</script>
+
+</body>
+</html>

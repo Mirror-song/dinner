@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>菜品管理</title>
+    <meta charset="UTF-8">
+    <title></title>
+    <link rel="stylesheet" href="/css/bootstrap.min.css"/>
+    <link rel="shortcut icon" href="/images/icon.png">
+    <script type="text/javascript" src="/js/jquery.min.js"></script>
+    <script type="text/javascript" src="/js/bootstrap.min.js"></script>
+</head>
+<body>
+<!--表单查询-->
+<div class="panel panel-primary" style="border: 1px solid dodgerblue;">
+    <div class="panel-heading" style="background-color: dodgerblue;">条件查询</div>
+    <br>
+    <div class="form-horizontal">
+        <div class="form-group">
+
+            <label class="col-sm-2 control-label" align="right">按菜系查询:</label>
+            <div class="col-sm-2">
+                <select type="text" id="typeId" class="form-control">
+
+                </select>
+            </div>
+
+            <label class="col-sm-2 control-label" align="right">菜名:</label>
+            <div class="col-sm-2">
+                <input type="text" class="form-control" id="name" placeholder="按菜名查询"/>
+            </div>
+            <div class="col-sm-4">
+                <button class="btn btn-success btn-sm" onclick="selectById()">查询</button>
+                <button type="button" class="btn btn-success btn-sm" onclick="addWin()">新增</button>
+                <button type="button" class="btn btn-success btn-sm" onclick="loadList()">刷新</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!--表格-->
+<div class="panel panel-primary" style="border: 1px solid dodgerblue;">
+    <div class="panel-heading" style="background-color: dodgerblue;">菜品列表</div>
+    <table class="table table-bordered table-hover" style="text-align: center">
+        <thead>
+        <th width="3%" style="text-align: center">id</th>
+        <th width="5%" style="text-align: center">菜名</th>
+        <th width="5%" style="text-align: center">菜系</th>
+        <th width="5%" style="text-align: center">价格</th>
+        <!--        <th width="5%" style="text-align: center">会员价</th>-->
+        <th style="text-align: center">描述</th>
+        <th width="5%" style="text-align: center">状态</th>
+
+        <th width="9%" style="text-align: center">操作</th>
+        </thead>
+        <tbody id="tb">
+
+        </tbody>
+    </table>
+
+</div>
+<div style="position: absolute;left: 40%;">
+    每页
+    <select style="height: 30px;width: 60px; border: 1px solid green;" id="myrow" onchange="loadList()">
+        <option value="2">2</option>
+        <option value="5" selected="selected">5</option>
+        <option value="10">10</option>
+    </select>
+    条
+
+    <button class="btn btn-success btn-sm" onclick="per()">上一页</button>
+    <button class="btn btn-success btn-sm" onclick="next()">下一页</button>
+    <button class="btn btn-success btn-sm" onclick="indexPage()">首页</button>
+    <button class="btn btn-success btn-sm" onclick="endPages()">尾页</button>
+    共<span id="total">xx</span>页
+    一共<span id="pages">xx</span>条
+    当前<span id="curPage">xx</span>页
+</div>
+<!--模态框-->
+<div class="modal fade" id="myWin" style="top:200px">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header" style="background-color: dodgerblue;height: 40px;padding-top: 1px;">
+                <h4 align="center" id="title">新增菜品</h4>
+            </div>
+            <div class="modal-body">
+                <form class="form-horizontal">
+                    <div class="form-group">
+                        <label class="col-sm-2 control-label" align="right">菜品id:</label>
+                        <div class="col-sm-10">
+                            <input type="text" id="foodId" readonly="readonly" class="form-control" placeholder="菜品编号"/>
+                        </div>
+                        <label class="col-sm-2 control-label" align="right">菜名:</label>
+                        <div class="col-sm-10">
+                            <input type="text" id="foodName" class="form-control" placeholder="请输入菜名"/>
+                        </div>
+                        <label class="col-sm-2 control-label" align="right">菜系:</label>
+                        <div class="col-sm-10">
+                            <select type="text" id="foodType" class="form-control">
+
+                            </select>
+                        </div>
+                        <label class="col-sm-2 control-label" align="right">价格:</label>
+                        <div class="col-sm-10">
+                            <input type="text" id="price" class="form-control" placeholder="请输入价格"/>
+                        </div>
+                        <!-- <label class="col-sm-2 control-label" align="right">会员价:</label>
+                         <div class="col-sm-10">
+                             <input type="text" id="vipPrice" class="form-control" placeholder="请输入会员价"/>
+                         </div>-->
+                        <label class="col-sm-2 control-label" align="right">状态:</label>
+                        <div class="col-sm-10">
+                            <select type="text" id="status" class="form-control">
+                                <option value="1">上架</option>
+                                <option value="0" selected="selected">下架</option>
+                            </select>
+                        </div>
+                        <label class="col-sm-2 control-label" align="right">描述:</label>
+                        <div class="col-sm-10">
+                            <input type="text" id="description" class="form-control" placeholder="请输入描述信息"/>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-success" type="button" id="updateBtn" onclick="update()">修改</button>
+                <button class="btn btn-success" type="button" id="addBtn" onclick="insert()">新增</button>
+                <button class="btn btn-success" type="button" data-dismiss="modal">取消</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
+<script>
+    //文档加载事件
+    $(function () {
+        foodType();
+        loadList();
+    })
+    //页码
+    var page = 1;
+    //尾页码
+    var endPage;
+
+    //上一页
+    function per() {
+        page--;
+        if (page < 1) {
+            page = 1
+        }
+        loadList();
+    }
+
+    //下一页
+    function next() {
+        page++;
+        if (page > endPage) {
+            page = endPage;
+        }
+        loadList();
+    }
+
+    //首页
+    function indexPage() {
+        page = 1
+        loadList();
+    }
+
+    //尾页
+    function endPages() {
+        page = endPage;
+        loadList();
+    }
+
+    //加载菜系列表
+    function foodType() {
+        $.ajax({
+            url: "/foodType/findAll",
+            type: "get",
+            dataType: "json",
+            success: function (data) {
+                window.list1 = data.data
+                console.log(list1);
+                //拼接html的变量
+                var s = "请选择菜系";
+                var a = "selected"
+                var str = "<option>" + s + "</option>";
+                for (var i = 0; i < list1.length; i++) {　//将数据循环插入select框中
+                    str += "<option value=" + list1[i].id + ">" + list1[i].typeName + "</option>";
+                }
+                $("#foodType").html(str);//select框的id，这句是将拼接的选项写入到select
+                $("#typeId").html(str);
+            }
+        })
+    }
+
+    //加载列表
+    function loadList() {
+        //获取用户选择的每页显示条数
+        var row = $("#myrow").val();
+
+        $.ajax({
+            url: "/food/queryAllFood",
+            data: {"page": page, "rows": row},
+            type: "get",
+            dataType: "json",
+            success: function (data) {
+                //获取查询的结果集
+                var list = data.data;
+                //尾页
+                endPage = data.endPage;
+                //显示总条数
+                $("#pages").text(data.total);
+                //显示总页数
+                $("#total").text(data.pages);
+                //显示当前页
+                $("#curPage").text(data.curPage);
+
+                //拼接html的变量
+                var html = "";
+                for (var i = 0; i < list.length; i++) {
+                    if (list[i].status === 1) {
+                        list[i].status = "上架";
+                    } else {
+                        list[i].status = "下架";
+                    }
+                    for (var j = 0; j < list1.length; j++) {
+                        if (list[i].typeId === list1[j].id) {
+                            list[i].typeId = list1[j].typeName;
+                            console.log(list[i].typeId)
+                        }
+                    }
+                    html += "<tr>" +
+                        "<td>" + list[i].id + "</td>" +
+                        "<td>" + list[i].foodName + "</td>" +
+                        "<td>" + list[i].typeId + "</td>" +
+                        "<td>" + list[i].price + "元" + "</td>" +
+                        // "<td>" + list[i].vipPrice + "</td>" +
+                        "<td>" + list[i].description + "</td>" +
+                        "<td>" + list[i].status + "</td>" +
+                        "<td><button class='btn btn-warning btn-sm' onclick='upWindow(this)'>修改</button>" +
+                        "<button class='btn btn-danger btn-sm' onclick='del(this)'>删除</button></td>" +
+                        "</tr>"
+                }
+                //html设置文本和标签
+                $("#tb").html(html);
+
+            }
+        })
+    }
+
+    //打开新增窗口
+    function addWin() {
+        //清空模态框的数据
+        clearWin();
+        //显示模态框
+        $("#myWin").modal("show");
+        //更改窗体的标题
+        $("#title").text("新增记录");
+        //隐藏修改按钮的button
+        $("#updateBtn").hide();
+        //显示新增按钮的button
+        $("#addBtn").show();
+        //id不可编辑
+        $("#foodId").attr("readOnly", true);
+
+    }
+
+    //新增数据
+    function insert() {
+        //获取员工姓名
+        var foodId = $("#foodId").val();
+        var foodName = $("#foodName").val();
+        var foodType = $("#foodType").val();
+        var price = $("#price").val();
+        var vipPrice = $("#vipPrice").val();
+        var status = $("#status").val();
+        var description = $("#description").val();
+
+        $.ajax({
+            url: "/food/add",
+            data: {
+                "id": foodId,
+                "foodName": foodName,
+                "typeId": foodType,
+                "price": price,
+                "vipPrice": vipPrice,
+                "status": status,
+                "description": description
+            },
+            type: "get",
+            dataType: "json",
+            success: function (data) {
+                if (data.info === "新增成功") {
+                    $("#myWin").modal("hide")
+                    //刷新
+                    loadList();
+                } else {
+                    alert(data.info);
+                }
+            }
+        })
+    }
+
+    //清空
+    function clearWin() {
+        $("#foodId").val("");
+        $("#foodName").val("");
+        $("#foodType").val("");
+        $("#price").val("");
+        $("#vipPrice").val("");
+        $("#status").val("");
+        $("#description").val("");
+    }
+
+    //打开修改窗口
+    function upWindow(obj) {
+        //显示模态框
+        $("#myWin").modal("show");
+        //更改窗体的标题
+        $("#title").text("修改记录");
+        //隐藏新增按钮的button
+        $("#addBtn").hide();
+        //显示修改按钮的button
+        $("#updateBtn").show();
+        //学生id不可编辑
+        $("#foodId").attr("readOnly", true);
+
+        //获取选中行的的第一列的数据
+        var foodId = $(obj).parent().parent().find("td").eq(0).text();
+        //设置模态框中 的值
+        $("#foodId").val(foodId);
+        //获取选中行的的第二列的数据
+        var foodName = $(obj).parent().parent().find("td").eq(1).text();
+        //设置模态框中 的值
+        $("#foodName").val(foodName);
+        //获取选中行的的第三列的数据
+        var foodType = $(obj).parent().parent().find("td").eq(2).text();
+        //设置模态框中 的值
+        $("#foodType").find("option:contains(" + foodType + ")").attr("selected", "selected");
+        //获取选中行的的第四列的数据
+        var price = $(obj).parent().parent().find("td").eq(3).text();
+        //设置模态框中 的值id
+        $("#price").val(price);
+        /*//获取选中行的的第五列的数据
+        var vipPrice = $(obj).parent().parent().find("td").eq(4).text();
+        //设置模态框中 的值
+        $("#vipPrice").val(vipPrice);*/
+        //获取选中行的的第7列的数据
+        var description = $(obj).parent().parent().find("td").eq(4).text();
+        //设置模态框中 的值
+        $("#description").val(description);
+        //获取选中行的的第六列的数据
+        var status = $(obj).parent().parent().find("td").eq(5).text();
+        //设置模态框中 的值
+        $("#status").find("option:contains(" + status + ")").attr("selected", "selected");
+
+    }
+
+    //修改数据
+    function update() {
+        //获取id
+        var foodId = $("#foodId").val();
+        var foodName = $("#foodName").val();
+        var foodType = $("#foodType").val();
+        var price = $("#price").val();
+        // var vipPrice = $("#vipPrice").val();
+        var status = $("#status").val();
+        var description = $("#description").val();
+        $.ajax({
+            url: "/food/update",
+            data: {
+                "id": foodId,
+                "foodName": foodName,
+                "foodType": foodType,
+                "price": price,
+                // "vipPrice": vipPrice,
+                "status": status,
+                "description": description
+            },
+            type: "get",
+            dataType: "json",
+            success: function (data) {
+                if (data.info === "修改成功") {
+                    $("#myWin").modal("hide")
+                    //刷新
+                    loadList();
+                } else {
+                    alert(data.info);
+                }
+            }
+        })
+    }
+
+    //删除
+    function del(obj) {
+        var info = confirm("你确定要删除吗")
+        if (info) {
+
+            var foodId = $(obj).parent().parent().find("td").eq(0).text();
+            $.ajax({
+                url: "/food/del",
+                data: {"id": foodId},
+                type: "get",
+                dataType: "json",
+                success: function (data) {
+                    if (data.info === "删除成功") {
+                        $("#myWin").modal("hide")
+                        //刷新
+                        loadList();
+                    } else {
+                        alert(data.info);
+                    }
+
+                }
+            })
+        }
+    }
+
+    //条件查询
+    function selectById() {
+        //获取用户选择的每页显示条数
+        var row = $("#myrow").val();
+        //获取id
+        var id = $("#typeId").val();
+        var name = $("#name").val();
+        console.log(id);
+
+        $.ajax({
+            url: "/food/select",
+            //"page"键名和page属性对应
+            data: {"typeId": id, "foodName": name, "page": page, "rows": row},
+            type: "get",
+            dataType: "json",
+            success: function (data) {
+                //获取查询的结果集
+                var list = data.data;
+                //尾页
+                endPage = data.endPage;
+                //显示总条数
+                $("#pages").text(data.total);
+                //显示总页数
+                $("#total").text(data.pages);
+                //显示当前页
+                $("#curPage").text(data.curPage);
+
+                //拼接html的变量
+                var html = "";
+                for (var i = 0; i < list.length; i++) {
+                    if (list[i].status == 1) {
+                        list[i].status = "上架";
+                    } else {
+                        list[i].status = "下架";
+                    }
+                    for (var j = 0; j < list1.length; j++) {
+                        if (list[i].typeId == list1[j].id) {
+                            list[i].typeId = list1[j].typeName;
+                            console.log(list[i].typeId)
+                        }
+                    }
+                    html += "<tr>" +
+                        "<td>" + list[i].id + "</td>" +
+                        "<td>" + list[i].foodName + "</td>" +
+                        "<td>" + list[i].typeId + "</td>" +
+                        "<td>" + list[i].price + "元" + "</td>" +
+                        // "<td>" + list[i].vipPrice + "</td>" +
+                        "<td>" + list[i].description + "</td>" +
+                        "<td>" + list[i].status + "</td>" +
+                        "<td><button class='btn btn-warning btn-sm' onclick='upWindow(this)'>修改</button>" +
+                        "<button class='btn btn-danger btn-sm' onclick='del(this)'>删除</button></td>" +
+                        "</tr>"
+                }
+                //html设置文本和标签
+                $("#tb").html(html);
+            }
+        })
+
+    }
+</script>

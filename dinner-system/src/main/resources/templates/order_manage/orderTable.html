@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>餐桌列表</title>
+
+    <link rel="stylesheet" href="/css/bootstrap.min.css"/>
+    <link rel="shortcut icon" href="/images/icon.png">
+    <script type="text/javascript" src="/js/jquery.min.js"></script>
+    <script type="text/javascript" src="/js/bootstrap.min.js"></script>
+</head>
+<body>
+<!--表单查询-->
+<div class="panel panel-primary" style="border: 1px solid dodgerblue;">
+    <div class="panel-heading" style="background-color: dodgerblue;">条件查询</div>
+    <br>
+    <div class="form-horizontal">
+        <div class="form-group">
+            <label class="col-sm-1 control-label" align="right">ID:</label>
+            <div class="col-sm-2">
+                <input type="text" class="form-control" id="fuzzyID" placeholder="按ID查询"/>
+            </div>
+            <label class="col-sm-1 control-label" align="right">餐桌名:</label>
+            <div class="col-sm-2">
+                <input type="text" class="form-control" id="fuzzyName" placeholder="按餐桌名查询"/>
+            </div>
+            <label class="col-sm-1 control-label" align="right">状态:</label>
+            <div class="col-sm-2">
+                <select type="text" id="statusInfo" class="form-control">
+                    <option value="1" selected="selected">可预订</option>
+                    <option value="0">已预订</option>
+                </select>
+            </div>
+            <div class="col-sm-3">
+                <button class="btn btn-success btn-sm" onclick="fuzzyQuery()">查询</button>
+                <!--                <button type="button" class="btn btn-success btn-sm" onclick="addWin()">新增</button>-->
+                <button type="button" class="btn btn-success btn-sm" onclick="loadList()">刷新</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!--表格-->
+<div class="panel panel-primary" style="border: 1px solid dodgerblue;">
+    <div class="panel-heading" style="background-color: dodgerblue;">餐桌列表</div>
+    <table class="table table-bordered table-hover">
+        <thead>
+        <th width="5%">id</th>
+
+        <th>餐桌名</th>
+        <th>可坐人数</th>
+        <th>状态</th>
+
+        <th width="20%">操作</th>
+        </thead>
+        <tbody id="tb">
+
+        </tbody>
+    </table>
+
+</div>
+<div style="position: absolute;left: 40%;">
+    每页
+    <select style="height: 30px;width: 60px; border: 1px solid green;" id="myrow" onchange="loadList()">
+        <option value="2">2</option>
+        <option value="5" selected="selected">5</option>
+        <option value="10">10</option>
+    </select>
+    条
+
+    <button class="btn btn-success btn-sm" onclick="per()">上一页</button>
+    <button class="btn btn-success btn-sm" onclick="next()">下一页</button>
+    <button class="btn btn-success btn-sm" onclick="indexPage()">首页</button>
+    <button class="btn btn-success btn-sm" onclick="endPages()">尾页</button>
+    共<span id="total">xx</span>页
+    一共<span id="pages">xx</span>条
+    当前<span id="curPage">xx</span>页
+</div>
+<!--模态框-->
+<div class="modal fade" id="myWin" style="top:200px">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header" style="background-color: dodgerblue;height: 40px;padding-top: 1px;">
+                <h4 align="center" id="title">新增餐桌</h4>
+            </div>
+            <div class="modal-body">
+                <form class="form-horizontal">
+                    <div class="form-group">
+                        <label class="col-sm-2 control-label" align="right">餐桌id:</label>
+                        <div class="col-sm-10">
+                            <input type="text" id="checkId" readonly="readonly" class="form-control"
+                                   placeholder="餐桌编号"/>
+                        </div>
+                        <label class="col-sm-2 control-label" align="right">餐桌名:</label>
+                        <div class="col-sm-10">
+                            <input type="text" id="tableName" class="form-control" placeholder="请输入餐桌名"/>
+                        </div>
+
+                        <label class="col-sm-2 control-label" align="right">可坐人数:</label>
+                        <div class="col-sm-10">
+                            <input type="text" id="number" class="form-control" placeholder="请输入可坐人数"/>
+                        </div>
+                        <label class="col-sm-2 control-label" align="right">状态:</label>
+                        <div class="col-sm-10">
+                            <select type="text" id="status" class="form-control">
+                                <option value="1" selected="selected">空闲</option>
+                                <option value="0">占用</option>
+                            </select>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
+<script>
+    //文档加载事件
+    $(function () {
+        loadList();
+    })
+    //页码
+    var page = 1;
+    //尾页码
+    var endPage;
+
+    //上一页
+    function per() {
+        page--;
+        if (page < 1) {
+            page = 1
+        }
+        loadList();
+    }
+
+    //下一页
+    function next() {
+        page++;
+        if (page > endPage) {
+            page = endPage;
+        }
+        loadList();
+    }
+
+    //首页
+    function indexPage() {
+        page = 1
+        loadList();
+    }
+
+    //尾页
+    function endPages() {
+        page = endPage;
+        loadList();
+    }
+
+    //加载列表
+    function loadList() {
+
+        //获取用户选择的每页显示条数
+        var row = $("#myrow").val();
+        $.ajax({
+            url: "/table/queryAllTable",
+            //"page"键名和page属性对应
+            data: {"page": page, "rows": row},
+            type: "get",
+            dataType: "json",
+            success: function (data) {
+                //获取查询的结果集
+                var list = data.data;
+                //尾页
+                endPage = data.endPage;
+                //显示总条数
+                $("#pages").text(data.total);
+                //显示总页数
+                $("#total").text(data.pages);
+                //显示当前页
+                $("#curPage").text(data.curPage);
+
+                //拼接html的变量
+                var html = "";
+                for (var i = 0; i < list.length; i++) {
+                    if (list[i].status === 1) {
+                        list[i].status = "可预订";
+                    } else {
+                        list[i].status = "已预订";
+                    }
+
+                    // #dates.format(list[i].checkTime, 'dd/MMM/yyyy HH:mm')
+                    html += "<tr>" +
+                        "<td>" + list[i].id + "</td>" +
+                        "<td>" + list[i].tableName + "</td>" +
+                        "<td>" + list[i].number + "</td>" +
+                        "<td>" + list[i].status + "</td>" +
+                        "<td><button class='btn btn-warning btn-sm' onclick='predestinate(this)'>预定</button>" +
+                        "<button class='btn btn-success btn-sm' onclick='cancel(this)'>翻台</button>" +
+                        "<button class='btn btn-danger btn-sm' onclick='order(this)'>订餐</button>" +
+                        "<button class='btn btn-info btn-sm' onclick='search(this)'>详情及结算</button></td>" +
+                        "</tr>"
+                }
+                //html设置文本和标签
+                $("#tb").html(html);
+
+            }
+        })
+    }
+
+    //预定餐桌
+    function predestinate(obj) {
+        var info = confirm("您确定要预定一个桌子吗")
+        if (info) {
+            var tableId = $(obj).parent().parent().find("td").eq(0).text();
+            //获取要删除的id
+            var name = $(obj).parent().parent().find("td").eq(1).text();
+            //获取要删除的id
+            var people = $(obj).parent().parent().find("td").eq(2).text();
+            $.ajax({
+                url: "/orderDetail/order",
+                data: {"id": tableId, "table_name": name, "number": people},
+                type: "get",
+                dataType: "json",
+                success: function (data) {
+                    if (data.info === "预定成功") {
+                        alert("预定成功!");
+                        //刷新
+                        loadList();
+                    } else {
+                        alert(data.info);
+                    }
+
+                }
+            })
+        }
+    }
+
+    //翻台
+    function cancel(obj) {
+        var info = confirm("您确定要翻台吗")
+        if (info) {
+            var tableId = $(obj).parent().parent().find("td").eq(0).text();
+            //获取要删除的id
+            var name = $(obj).parent().parent().find("td").eq(1).text();
+            //获取要删除的id
+            var people = $(obj).parent().parent().find("td").eq(2).text();
+            $.ajax({
+                url: "/orderDetail/cancel",
+                data: {"id": tableId, "table_name": name, "number": people},
+                type: "get",
+                dataType: "json",
+                success: function (data) {
+                    if (data.info === "翻台成功") {
+                        // alert("翻台成功!");
+                        //刷新
+                        loadList();
+                    } else {
+                        alert(data.info);
+                    }
+
+                }
+            })
+        }
+    }
+
+    //订餐
+    function order(obj) {
+        //获取值
+        var tableId = $(obj).parent().parent().find("td").eq(0).text();
+        //获取
+        var name = $(obj).parent().parent().find("td").eq(1).text();
+        //获取
+        var people = $(obj).parent().parent().find("td").eq(2).text();
+
+        var status = $(obj).parent().parent().find("td").eq(3).text();
+
+        if (status === "可预订") {
+            status = 1;
+        } else if (status === "已预订") {
+            status = 2;
+        }
+        $.ajax({
+            url: "/orderDetail/orderDinner",
+            data: {"id": tableId, "table_name": name, "number": people, "status": status},
+            type: "get",
+            dataType: "json",
+            success: function (result) {
+                window.location.href = '/orderDetail/menu/' + result.tableId + '&' + result.tableStatus;
+            }
+        })
+    }
+
+    //详情及结算
+    function search(obj) {
+        //获取要餐桌的id
+        var tableId = $(obj).parent().parent().find("td").eq(0).text();
+        window.location.href = '/orderDetail/search/' + tableId;
+
+    }
+
+    //条件查询
+    function fuzzyQuery() {
+        //获取用户选择的每页显示条数
+        var row = $("#myrow").val();
+        var id = $("#fuzzyID").val();
+        var fuzzyName = $("#fuzzyName").val();
+        var statusInfo = $("#statusInfo").val();
+        $.ajax({
+            url: "/table/fuzzySelect",
+            data: {"page": page, "rows": row, "id": id, "tableName": fuzzyName, "status": statusInfo},
+            type: "get",
+            dataType: "json",
+            success: function (info) {
+                if (info.info === "查询成功") {
+                    //获取查询的结果集
+                    var list = info.data;
+                    //尾页
+                    endPage = info.endPage;
+                    //显示总条数
+                    $("#pages").text(info.total);
+                    //显示总页数
+                    $("#total").text(info.pages);
+                    //显示当前页
+                    $("#curPage").text(info.curPage);
+                    //拼接html的变量
+                    var html = "";
+                    for (var i = 0; i < list.length; i++) {
+                        if (list[i].status === 1) {
+                            list[i].status = "可预订";
+                        } else {
+                            list[i].status = "已预订";
+                        }
+                        html += "<tr>" +
+                            "<td>" + list[i].id + "</td>" +
+                            "<td>" + list[i].tableName + "</td>" +
+                            "<td>" + list[i].number + "</td>" +
+                            "<td>" + list[i].status + "</td>" +
+                            "<td><button class='btn btn-warning btn-sm' onclick='predestinate(this)'>预定</button>" +
+                            "<button class='btn btn-success btn-sm' onclick='cancel(this)'>翻台</button>" +
+                            "<button class='btn btn-danger btn-sm' onclick='order(this)'>订餐</button>" +
+                            "<button class='btn btn-info btn-sm' onclick='search(this)'>详情及结算</button></td>" +
+                            "</tr>"
+                    }
+                    //html设置文本和标签
+                    $("#tb").html(html);
+                } else {
+                    alert(info.info);
+                }
+            }
+        })
+    }
+</script>

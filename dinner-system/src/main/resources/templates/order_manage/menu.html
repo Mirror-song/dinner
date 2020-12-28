@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <title>菜单</title>
+    <meta charset="UTF-8">
+    <title></title>
+    <link rel="stylesheet" href="/css/bootstrap.min.css"/>
+    <link rel="shortcut icon" href="/images/icon.png">
+    <script type="text/javascript" src="/js/jquery.min.js"></script>
+    <script type="text/javascript" src="/js/bootstrap.min.js"></script>
+</head>
+<body>
+<!--表单查询-->
+<div class="panel panel-primary" style="border: 1px solid dodgerblue;">
+    <div class="panel-heading" style="background-color: dodgerblue;">条件查询</div>
+    <br>
+    <div class="form-horizontal">
+        <div class="form-group">
+
+            <label class="col-sm-2 control-label" align="right">按菜系查询:</label>
+            <div class="col-sm-2">
+                <select type="text" id="typeId" class="form-control">
+
+                </select>
+            </div>
+
+            <label class="col-sm-2 control-label" align="right">菜名:</label>
+            <div class="col-sm-2">
+                <input type="text" class="form-control" id="name" placeholder="按菜名查询"/>
+            </div>
+            <div class="col-sm-4">
+                <button class="btn btn-success btn-sm" onclick="selectById()">查询</button>
+                <button type="button" class="btn btn-success btn-sm" onclick="loadList()">刷新</button>
+                <button type="button" class="btn btn-success btn-sm" onclick="javascript:history.back(-1);">返回</button>
+            </div>
+        </div>
+    </div>
+</div>
+<!--表格-->
+<div class="panel panel-primary" style="border: 1px solid dodgerblue;">
+    <input type="text" hidden="hidden" id="tableId" th:value="${tables.getId()}">
+    <input type="text" hidden="hidden" th:value="${tables.getStatus()}">
+    <div class="panel-heading" style="background-color: dodgerblue;">菜品列表</div>
+
+    <table class="table table-bordered table-hover" style="text-align: center">
+        <thead>
+        <th width="3%" style="text-align: center">id</th>
+        <th width="5%" style="text-align: center">菜名</th>
+        <th width="5%" style="text-align: center">菜系</th>
+        <th width="5%" style="text-align: center">价格</th>
+<!--        <th width="5%" style="text-align: center">会员价</th>-->
+        <th style="text-align: center">描述</th>
+        <th width="5%" style="text-align: center">数量</th>
+
+        <th width="9%" style="text-align: center">操作</th>
+        </thead>
+        <tbody id="tb">
+
+        </tbody>
+    </table>
+
+</div>
+<div style="position: absolute;left: 40%;">
+    每页
+    <select style="height: 30px;width: 60px; border: 1px solid green;" id="myrow" onchange="loadList()">
+        <option value="2">2</option>
+        <option value="5" selected="selected">5</option>
+        <option value="10">10</option>
+    </select>
+    条
+
+    <button class="btn btn-success btn-sm" onclick="per()">上一页</button>
+    <button class="btn btn-success btn-sm" onclick="next()">下一页</button>
+    <button class="btn btn-success btn-sm" onclick="indexPage()">首页</button>
+    <button class="btn btn-success btn-sm" onclick="endPages()">尾页</button>
+    共<span id="total">xx</span>页
+    一共<span id="pages">xx</span>条
+    当前<span id="curPage">xx</span>页
+</div>
+<div class="media-right" style="width:100px;height:40px; float: right;margin-right: 100px">
+    <button class="btn btn-success btn-sm" onclick="ordering()" style="width:100px;height:50px;">下单</button>
+    <!--            <button class="btn btn-warning btn-sm" onclick="orderInfo()">订单详情</button>-->
+    <!--            <button type="button" class="btn btn-success btn-sm" onclick="counting()">结算</button>-->
+</div>
+<!--模态框-->
+
+</body>
+</html>
+<script>
+    //文档加载事件
+    $(function () {
+        foodType();
+        loadList();
+
+    })
+    //页码
+    var page = 1;
+    //尾页码
+    var endPage;
+
+    //上一页
+    function per() {
+        page--;
+        if (page < 1) {
+            page = 1
+        }
+        loadList();
+    }
+
+    //下一页
+    function next() {
+        page++;
+        if (page > endPage) {
+            page = endPage;
+        }
+        loadList();
+    }
+
+    //首页
+    function indexPage() {
+        page = 1
+        loadList();
+    }
+
+    //尾页
+    function endPages() {
+        page = endPage;
+        loadList();
+    }
+
+    //加载菜系列表
+    function foodType() {
+        $.ajax({
+            url: "/foodType/findAll",
+            type: "get",
+            dataType: "json",
+            success: function (data) {
+                window.list1 = data.data
+                console.log(list1);
+                //拼接html的变量
+                var s = "请选择菜系";
+                var a = "selected"
+                var str = "<option>" + s + "</option>";
+                for (var i = 0; i < list1.length; i++) {　//将数据循环插入select框中
+                    str += "<option value=" + list1[i].id + ">" + list1[i].typeName + "</option>";
+                }
+                $("#foodType").html(str);//select框的id，这句是将拼接的选项写入到select
+                $("#typeId").html(str);
+            }
+        })
+    }
+
+
+    function update(obj) {
+        var num = $(obj).parent().parent().find("td").eq(5).text();
+        num = parseInt(num) + 1;
+        $(obj).parent().parent().find("td").eq(5).text(num);
+        var tableId = $("#tableId").val();
+        console.log(tableId);
+        var foodId = $(obj).parent().parent().find("td").eq(0).text();
+        var foodName = $(obj).parent().parent().find("td").eq(1).text();
+        var price = $(obj).parent().parent().find("td").eq(3).text();
+        // var vipPrice = $(obj).parent().parent().find("td").eq(4).text();
+        var number = $(obj).parent().parent().find("td").eq(5).text();
+        $.ajax({
+            url: "/orderDetail/addCar",
+            data: {"tableId": tableId, "foodId": foodId, "foodCount": number, "price": price},
+            type: "get",
+            dataType: "json",
+            success: function (data) {
+                if (data.info === "加入成功") {
+                    // alert("加入成功！")
+                } else {
+                    alert(data.info);
+                }
+
+            }
+        })
+    }
+
+    //加载列表
+    function loadList() {
+
+        //获取用户选择的每页显示条数
+        var row = $("#myrow").val();
+
+        $.ajax({
+            url: "/food/queryAllFood",
+            data: {"page": page, "rows": row},
+            type: "get",
+            dataType: "json",
+            success: function (data) {
+                //获取查询的结果集
+                var list = data.data;
+                //尾页
+                endPage = data.endPage;
+                //显示总条数
+                $("#pages").text(data.total);
+                //显示总页数
+                $("#total").text(data.pages);
+                //显示当前页
+                $("#curPage").text(data.curPage);
+                //拼接html的变量
+                var html = "";
+                for (var i = 0; i < list.length; i++) {
+                    if (list[i].status === 1) {
+                        list[i].status = "上架";
+                    } else {
+                        list[i].status = "下架";
+                    }
+                    for (var j = 0; j < list1.length; j++) {
+                        if (list[i].typeId === list1[j].id) {
+                            list[i].typeId = list1[j].typeName;
+                            console.log(list[i].typeId)
+                        }
+                    }
+
+                    html += "<tr>" +
+                        "<td>" + list[i].id + "</td>" +
+                        "<td>" + list[i].foodName + "</td>" +
+                        "<td>" + list[i].typeId + "</td>" +
+                        "<td>" + list[i].price + "</td>" +
+                        // "<td>" + list[i].vipPrice + "</td>" +
+                        "<td>" + list[i].description + "</td>" +
+                        "<td>" + 0 + "</td>" +
+                        "<td><button class='btn btn-warning btn-sm' onclick='update(this)'>加入</button>" +
+                        "<button class='btn btn-danger btn-sm' onclick='cancel(this)'>取消</button></td>" +
+                        "</tr>"
+                }
+                //html设置文本和标签
+                $("#tb").html(html);
+
+            }
+        })
+    }
+
+    //取消
+    function cancel(obj) {
+        var info = confirm("取消后可重新加入！")
+        if (info) {
+            var foodId = $(obj).parent().parent().find("td").eq(0).text();
+            $.ajax({
+                url: "/orderDetail/cancel2",
+                data: {"foodId": foodId},
+                type: "get",
+                dataType: "json",
+                success: function (data) {
+                    if (data.info === "取消成功") {
+                        num = 0;
+                        $(obj).parent().parent().find("td").eq(5).text(num);
+                    } else {
+                        alert(data.info);
+                    }
+                }
+            })
+        }
+    }
+
+    //下单
+    function ordering() {
+        var info = confirm("确认下单吗？")
+        if (info) {
+            var tableId = $("#tableId").val();
+            $.ajax({
+                url: "/orderDetail/confirm",
+                data: {"tableId": tableId},
+                type: "get",
+                dataType: "json",
+                success: function (data) {
+                    if (data.info === "下单成功") {
+                        alert("下单成功!")
+                        window.location.href = '/orderDetail/orderTable'
+                    } else {
+                        alert(data.info);
+                    }
+                }
+            })
+        }
+    }
+
+    //条件查询
+    function selectById() {
+        //获取用户选择的每页显示条数
+        var row = $("#myrow").val();
+        //获取id
+        var id = $("#typeId").val();
+        var name = $("#name").val();
+        console.log(id);
+
+        $.ajax({
+            url: "/food/select",
+            //"page"键名和page属性对应
+            data: {"typeId": id, "foodName": name, "page": page, "rows": row},
+            type: "get",
+            dataType: "json",
+            success: function (data) {
+                //获取查询的结果集
+                var list = data.data;
+                //尾页
+                endPage = data.endPage;
+                //显示总条数
+                $("#pages").text(data.total);
+                //显示总页数
+                $("#total").text(data.pages);
+                //显示当前页
+                $("#curPage").text(data.curPage);
+
+                //拼接html的变量
+                var html = "";
+                for (var i = 0; i < list.length; i++) {
+                    if (list[i].status == 1) {
+                        list[i].status = "上架";
+                    } else {
+                        list[i].status = "下架";
+                    }
+                    for (var j = 0; j < list1.length; j++) {
+                        if (list[i].typeId == list1[j].id) {
+                            list[i].typeId = list1[j].typeName;
+                            console.log(list[i].typeId)
+                        }
+                    }
+                    html += "<tr>" +
+                        "<td>" + list[i].id + "</td>" +
+                        "<td>" + list[i].foodName + "</td>" +
+                        "<td>" + list[i].typeId + "</td>" +
+                        "<td>" + list[i].price + "</td>" +
+                        // "<td>" + list[i].vipPrice + "</td>" +
+                        "<td>" + list[i].description + "</td>" +
+                        "<td>" + 0 + "</td>" +
+                        "<td><button class='btn btn-warning btn-sm' onclick='update(this)'>加入</button>" +
+                        "<button class='btn btn-danger btn-sm' onclick='cancel(this)'>取消</button></td>" +
+                        "</tr>"
+                }
+                //html设置文本和标签
+                $("#tb").html(html);
+            }
+        })
+
+    }
+</script>
